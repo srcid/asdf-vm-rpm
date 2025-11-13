@@ -1,0 +1,86 @@
+name: "Monitor for new releases"
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  check-for-update:
+    runs-on: ubuntu-22.04
+    outputs:
+      new_version: ${{ steps.get-newest-release.outputs.new_version }}
+      cur_version: ${{ steps.get-current-version.outputs.cur_version }}
+    steps:
+      - name: Get newest release
+        id: get-newest-release
+        run: |
+          response="$(curl -fsSL https://api.github.com/repos/asdf-vm/asdf/releases/latest 2>&1)"
+          err="$?"
+
+          if [ "$err" -ne 0 ]
+          then
+            echo "$response"
+            exit $err
+          fi
+
+          new_version="$(jq -r '.tag_name' <<< "$response" | cut -c 2-)"
+
+          echo "new_version=$new_version" | tee --append "$GITHUB_OUTPUT"
+
+      - name: Checkout repo code
+        uses: actions/checkout@v4
+
+      - name: Get current version
+        id: get-current-version
+        run: |
+          cur_version=$(grep -Po 'Version:\s+\K(\d+\.)*\d+' asdf.spec)
+          echo "cur_version=$cur_version" | tee --append "$GITHUB_OUTPUT"
+
+  update-spec-file:
+    permissions:
+      contents: write
+      pull-requests: write
+
+    needs: check-for-update
+
+    if: ${{ needs.check-for-update.outputs.cur_version != needs.check-for-update.outputs.new_version }}
+
+    env:
+      CUR_VERSION: ${{ needs.check-for-update.outputs.cur_version }}
+      NEW_VERSION: ${{ needs.check-for-update.outputs.new_version }}
+      BRANCH: "release/asdf-v${{ needs.check-for-update.outputs.new_version }}"
+      GH_TOKEN: ${{ github.token }}
+
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repo code
+        uses: actions/checkout@v4
+
+      - name: Configuring git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Create new branch
+        run: git checkout -b $BRANCH
+
+      - name: "Updating file"
+        run: |
+          echo CUR_VERSION=$CUR_VERSION NEW_VERSION=$NEW_VERSION
+          sed -i -r "2s/$CUR_VERSION/$NEW_VERSION/" asdf.spec
+
+      - name: Commiting changes and making the PR
+        run: |
+          git add asdf.spec
+          git commit -m "updating asdf version from $CUR_VERSION to $NEW_VERSION"
+          git push -u origin $BRANCH
+
+      - name: Creating pr
+        run: |
+          gh pr create \
+            --title "Update ASDF version for $NEW_VERSION" \
+            --body "Updating spec file to the new ASDF release version" \
+            --base  master \
+            --head $BRANCH
