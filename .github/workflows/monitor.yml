@@ -49,7 +49,9 @@ jobs:
     env:
       CUR_VERSION: ${{ needs.check-for-update.outputs.cur_version }}
       NEW_VERSION: ${{ needs.check-for-update.outputs.new_version }}
-      BRANCH: "asdf-release-${{ needs.check-for-update.outputs.new_version }}"
+      BRANCH: "release/asdf-v${{ needs.check-for-update.outputs.new_version }}"
+      GH_TOKEN: ${{ github.token }}
+
     runs-on: ubuntu-22.04
 
     steps:
@@ -79,5 +81,6 @@ jobs:
         run: |
           gh pr create \
             --title "Update ASDF version for $NEW_VERSION" \
+            --body "Updating spec file to the new ASDF release version" \
             --base  master \
             --head $BRANCH
