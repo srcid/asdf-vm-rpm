@@ -35,7 +35,6 @@ jobs:
   update-spec-file:
     needs:
       - check-for-update
-    if: ${{ needs.check-for-update.outputs.new_version != needs.check-for-update.outputs.cur_version }}
     env:
       CUR_VERSION: ${{ needs.check-for-update.outputs.cur_version }}
       NEW_VERSION: ${{ needs.check-for-update.outputs.new_version }}
