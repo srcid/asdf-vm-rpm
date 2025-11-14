@@ -38,14 +38,48 @@ jobs:
           echo "cur_version=$cur_version" | tee --append "$GITHUB_OUTPUT"
 
   update-spec-file:
-    needs:
-      - check-for-update
-    if: ${{ needs.check-for-update.outputs.new_version != needs.check-for-update.outputs.cur_version }}
+    permissions:
+      contents: write
+      pull-requests: write
+
+    needs: check-for-update
+
+    if: ${{ needs.check-for-update.outputs.cur_version != needs.check-for-update.outputs.new_version }}
+
     env:
       CUR_VERSION: ${{ needs.check-for-update.outputs.cur_version }}
       NEW_VERSION: ${{ needs.check-for-update.outputs.new_version }}
+
     runs-on: ubuntu-22.04
+
     steps:
+      - name: Checkout repo code
+        uses: actions/checkout@v4
+
+      - name: Configuring git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Create new branch
+        run: |
+          BRANCH="asdf-release-$NEW_VERSION"
+          git checkout -b "$BRANCH" master
+
       - name: "Updating file"
         run: |
           echo CUR_VERSION=$CUR_VERSION NEW_VERSION=$NEW_VERSION
+          sed -i -r "2s/$CUR_VERSION/$NEW_VERSION/" asdf.spec
+
+      - name: Commiting changes and making the PR
+        run: |
+          git add asdf.spec
+          git commit -m "updating asdf version from $CUR_VERSION to $NEW_VERSION"
+          git push -u origin "$BRANCH"
+
+      - name: Creating pr
+        run: |
+          gh pr create \
+            --title "Update ASDF version for $NEW_VERSION" \
+            --base  master \
+            --head "$BRANCH"
