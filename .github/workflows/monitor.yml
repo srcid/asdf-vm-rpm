@@ -8,8 +8,12 @@ on:
 jobs:
   check-for-update:
     runs-on: ubuntu-22.04
+    outputs:
+      new_version: ${{ steps.get-newest-release.outputs.new_version }}
+      cur_version: ${{ steps.get-current-version.outputs.cur_version }}
     steps:
       - name: Get newest release
+        id: get-newest-release
         run: |
           response="$(curl -fsSL https://api.github.com/repos/asdf-vm/asdf/releases/latest 2>&1)"
           err="$?"
@@ -28,6 +32,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Get current version
+        id: get-current-version
         run: |
           cur_version=$(grep -Po 'Version:\s+\K(\d+\.)*\d+' asdf.spec)
           echo "cur_version=$cur_version" | tee --append "$GITHUB_OUTPUT"
@@ -35,6 +40,7 @@ jobs:
   update-spec-file:
     needs:
       - check-for-update
+    if: ${{ needs.check-for-update.outputs.new_version != needs.check-for-update.outputs.cur_version }}
     env:
       CUR_VERSION: ${{ needs.check-for-update.outputs.cur_version }}
       NEW_VERSION: ${{ needs.check-for-update.outputs.new_version }}
