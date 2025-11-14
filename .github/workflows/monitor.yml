@@ -49,7 +49,7 @@ jobs:
     env:
       CUR_VERSION: ${{ needs.check-for-update.outputs.cur_version }}
       NEW_VERSION: ${{ needs.check-for-update.outputs.new_version }}
-
+      BRANCH: "asdf-release-${{ needs.check-for-update.outputs.new_version }}"
     runs-on: ubuntu-22.04
 
     steps:
@@ -62,9 +62,7 @@ jobs:
           git config user.email "github-actions@github.com"
 
       - name: Create new branch
-        run: |
-          BRANCH="asdf-release-$NEW_VERSION"
-          git checkout -b "$BRANCH" master
+        run: git checkout -b $BRANCH
 
       - name: "Updating file"
         run: |
@@ -75,11 +73,11 @@ jobs:
         run: |
           git add asdf.spec
           git commit -m "updating asdf version from $CUR_VERSION to $NEW_VERSION"
-          git push -u origin "$BRANCH"
+          git push -u origin $BRANCH
 
       - name: Creating pr
         run: |
           gh pr create \
             --title "Update ASDF version for $NEW_VERSION" \
             --base  master \
-            --head "$BRANCH"
+            --head $BRANCH
