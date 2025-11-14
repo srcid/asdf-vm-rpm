@@ -38,4 +38,8 @@ jobs:
 
       - name: Creating pr
         run: |
-          gh pr create --title "Testing pr ${{ github.run_id }}-${{ github.run_attempt }}" --base master --head $BRANCH
+          gh pr create \
+            --title "Testing pr ${{ github.run_id }}-${{ github.run_attempt }}" \
+            --body "testing pr body" \
+            --base master \
+            --head $BRANCH
