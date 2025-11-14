@@ -1,0 +1,43 @@
+name: "Workflow for testing"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-spec-file: 
+    runs-on: ubuntu-22.04
+    
+    permissions:
+      contents: write
+      pull-requests: write
+
+    env:
+      BRANCH: asdf-release-testing-${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - name: Checkout repo code
+        uses: actions/checkout@v4
+
+      - name: Configuring git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Create new branch
+        run: git checkout -b $BRANCH
+
+      - name: "Updating file"
+        run: echo "# update from testing workflow" >> asdf.spec
+
+      - name: Commiting changes and making the PR
+        run: |
+          git add asdf.spec
+          git commit -m "updating spec file"
+          git push -u origin $BRANCH
+
+      - name: Creating pr
+        run: |
+          gh pr create \
+            --title "Testing pr ${{ github.run_id }}-${{ github.run_attempt }}" \
+            --base  master \
+            --head $BRANCH
