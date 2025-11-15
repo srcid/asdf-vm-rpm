@@ -14,7 +14,6 @@ jobs:
 
     env:
       PIPX_BIN_DIR: /usr/local/bin
-      PIPX_HOME: /usr/local
       COPR_API_TOKEN_CONFIG: ${{ secrets.COPR_API_TOKEN_CONFIG }}
       COPR_BUILD_TIMEOUT: 900
     steps:
