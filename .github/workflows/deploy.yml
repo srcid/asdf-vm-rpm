@@ -1,0 +1,39 @@
+name: "Deploy COPR build"
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - asdf.spec
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+
+    env:
+      PIPX_BIN_DIR: /usr/local/bin
+      COPR_API_TOKEN_CONFIG: ${{ secrets.COPR_API_TOKEN_CONFIG }}
+      COPR_BUILD_TIMEOUT: 900
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: installing copr-cli
+        run: |
+          pipx install copr-cli
+          copr-cli --help
+
+      - name: publishing on copr
+        run: |
+          echo "$COPR_API_TOKEN_CONFIG" > copr_config
+
+          copr-cli --config ./copr_config buildscm \
+            --type git \
+            --clone-url https://github.com/srcid/asdf-vm-rpm.git \
+            --commit master \
+            --spec asdf.spec \
+            --method rpkg \
+            --enable-net on \
+            --timeout $COPR_BUILD_TIMEOUT \
+            srcid/asdf
