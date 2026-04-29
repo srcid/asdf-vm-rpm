@@ -13,14 +13,15 @@ jobs:
     runs-on: ubuntu-22.04
 
     env:
+      COPRCLI_VERSION: 2.4
       COPR_API_TOKEN_CONFIG: ${{ secrets.COPR_API_TOKEN_CONFIG }}
       COPR_BUILD_TIMEOUT: 900
     steps:
       - uses: actions/checkout@v4
 
       - name: installing copr-cli
-        run: |
-          pipx install --global copr-cli
+        run: pipx install --global copr-cli==$COPRCLI_VERSION
+        
       - name: publishing on copr
         run: |
           echo "$COPR_API_TOKEN_CONFIG" > copr_config
