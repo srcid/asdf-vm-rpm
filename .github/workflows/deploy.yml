@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-22.04
 
     env:
-      PIPX_BIN_DIR: /usr/local/bin
       COPR_API_TOKEN_CONFIG: ${{ secrets.COPR_API_TOKEN_CONFIG }}
       COPR_BUILD_TIMEOUT: 900
     steps:
@@ -21,7 +20,7 @@ jobs:
 
       - name: installing copr-cli
         run: |
-          pipx install copr-cli
+          pipx install --global copr-cli
           copr-cli --help
 
       - name: publishing on copr
