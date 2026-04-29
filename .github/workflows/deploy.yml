@@ -21,8 +21,6 @@ jobs:
       - name: installing copr-cli
         run: |
           pipx install --global copr-cli
-          copr-cli --help
-
       - name: publishing on copr
         run: |
           echo "$COPR_API_TOKEN_CONFIG" > copr_config
