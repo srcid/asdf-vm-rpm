@@ -1,5 +1,5 @@
 Name:           asdf
-Version:        0.19.0
+Version:        0.20.0
 Release:        1%{?dist}
 Summary:        A tool to manage multiple runtimes
 License:        MIT
